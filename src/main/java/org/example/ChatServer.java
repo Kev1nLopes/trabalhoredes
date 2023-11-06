@@ -2,6 +2,7 @@ package org.example;
 
 import java.io.IOException;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class ChatServer {
@@ -11,6 +12,8 @@ public class ChatServer {
     private static final int PORT = 8085;
 
     private static DatagramSocket socket;
+
+    private static ArrayList<String> messages = new ArrayList<String>();
 
     static{
         try{
@@ -37,7 +40,7 @@ public class ChatServer {
     }
 
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws IOException {
 
         System.out.println("Server started on port" + PORT);
 
@@ -49,17 +52,24 @@ public class ChatServer {
                 throw new RuntimeException(e);
             }
 
-            String mensagem = new String(packet.getData(), 0, packet.getLength());
-            System.out.println("Recebi a mensagem" + mensagem);
+            String mensagem = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8);
+            messages.add(mensagem);
+            for (String message: messages
+            ) {
+                System.out.println(message);
+            }
 
 
             //Ver maneira de inicializar usuario
             if(mensagem.contains("Entrou")){
-                System.out.println("alguem entrou");
+
                 String username = mensagem.substring(mensagem.indexOf(";") + 1);
-                System.out.println(username);
+                System.out.println(username + " entrou");
                 users.add(packet.getPort());
+                System.out.println(packet.getPort());
                 userNames.add(username);
+                DatagramPacket responseConfirm = new DatagramPacket((username + " entrou").getBytes(), (username + " entrou").getBytes().length , address, packet.getPort());
+                socket.send(responseConfirm);
 
             }else{
                int userPort = packet.getPort();
@@ -67,6 +77,7 @@ public class ChatServer {
 
                for(int forward_port : users){
                    if(forward_port != userPort){
+                       System.out.println("Enviando para outros");
                        DatagramPacket forward = new DatagramPacket(byteMessage, byteMessage.length, address, forward_port);
                        try{
                            socket.send(forward);

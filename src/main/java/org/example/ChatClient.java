@@ -1,5 +1,6 @@
 package org.example;
 
+import Model.Usuario;
 import View.Screen;
 
 import javax.swing.*;
@@ -32,7 +33,6 @@ public class ChatClient extends JFrame {
     }
 
 
-    private static final String nome = "Kevin";
 
     private static final int SERVER_PORT = 8085;
     private static final TextField inputBox = new TextField();
@@ -48,9 +48,8 @@ public class ChatClient extends JFrame {
                 byte[] uuid = ("Entrou ;" + field.getText()).getBytes();
                 DatagramPacket initialize = new DatagramPacket(uuid, uuid.length, address, SERVER_PORT);
                 socket.send(initialize);
-                Screen screen = new Screen(field.getText());
-                ClientThread clientThread = new ClientThread(socket, screen);
-                clientThread.start();
+                new Screen(field.getText(), socket, new Usuario(field.getText(), Usuario.StatusUsuario.DISPONIVEL, InetAddress.getByName("localhost")));
+
             }else{
                 JOptionPane.showMessageDialog(null, "Por favor informe seu nome infeliz", "Erro", JOptionPane.ERROR_MESSAGE);
 

@@ -1,6 +1,7 @@
 package View;
 
 import Model.Usuario;
+import org.example.ClientThread;
 
 import javax.swing.*;
 import java.awt.*;
@@ -8,19 +9,33 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 public class Screen extends JFrame implements ActionListener {
 
-
     private JTextField text;
+
+    private DatagramSocket _socket;
+
+    private Usuario _user;
+
     private JTextPane painelEsquerdo = new JTextPane();
-    private JTextPane painelDireito = new JTextPane();
-    private Usuario usuario;
-    public Screen(String nome){
-        Usuario usuario = new Usuario();
-        usuario.setNome(nome);
-        System.out.println(usuario.getNome());
+
+    private ArrayList<String> messages  = new ArrayList<String>();
+
+    private byte[] recebeMensagens;
+    private JTextArea painelDireito = new JTextArea();
+
+    public Screen(String nome, DatagramSocket socket, Usuario user){
+
+        _socket = socket;
+        _user = user;
+
 
 
 
@@ -36,7 +51,7 @@ public class Screen extends JFrame implements ActionListener {
         setLayout(null);
 
         JButton jButton = new JButton("Enviar");
-        jButton.setBounds(580, 430, 200, 30);
+        jButton.setBounds(300, 430, 150, 30);
         jButton.setVisible(true);
         jButton.setFont(new Font("Arial", Font.BOLD, 20));
         jButton.setForeground(new Color(200,200,200));
@@ -52,6 +67,7 @@ public class Screen extends JFrame implements ActionListener {
         text.setFont(new Font("Arial", Font.ITALIC, 20));
         text.setVisible(true);
         text.setEnabled(true);
+
 
 
 
@@ -75,12 +91,43 @@ public class Screen extends JFrame implements ActionListener {
 
 
 
+        while(true){
+            recebeSonda();
+        }
 
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        JOptionPane.showMessageDialog(null, text.getText().toString(), "Sucesso", JOptionPane.QUESTION_MESSAGE);
+        try{
+            synchronized (text){
+                ClientThread clientThread = new ClientThread(_socket, _user.getNome() + ": " + text.getText());
+                clientThread.start();
+                painelDireito.append(_user.getNome() + ": " + text.getText() + "\n");
+                text.setText(null);
+            }
+        }catch (RuntimeException ex){
+
+        }
+
+    }
+
+
+    public void recebeSonda(){
+        try{
+            System.out.println("recebendo sonda");
+            recebeMensagens = new byte[1024];
+            DatagramPacket recebeSonda = new DatagramPacket(recebeMensagens, recebeMensagens.length);
+            _socket.receive(recebeSonda);
+
+            String mensagem = new String(recebeSonda.getData(), 0, recebeSonda.getLength());
+            System.out.println("Mensagem recebida de " + recebeSonda.getAddress().getHostAddress());
+            painelDireito.append(mensagem + "\n");
+
+
+        }catch (IOException e){
+
+        }
     }
 }
 
