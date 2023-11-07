@@ -26,7 +26,6 @@ public class ChatClient extends JFrame {
     static {
         try{
             address = InetAddress.getByName("localhost");
-
         }catch (UnknownHostException e){
             throw new RuntimeException(e);
         }
@@ -55,17 +54,6 @@ public class ChatClient extends JFrame {
 
             }
         }
-
-
-
-
-
-
-
-
-
-
-
      }
 
 
