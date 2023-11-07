@@ -40,12 +40,16 @@ public class Screen extends JFrame implements ActionListener {
     private byte[] recebeMensagens;
     private JTextArea painelDireito = new JTextArea();
 
+    private long timestampInicial;
+
     private ArrayList<String> userServerString = new ArrayList<>();
 
-    public Screen(String nome, DatagramSocket socket, Usuario user){
+    public Screen(String nome, DatagramSocket socket, Usuario user) throws IOException {
 
         _socket = socket;
         _user = user;
+
+
 
 
 
@@ -121,7 +125,18 @@ public class Screen extends JFrame implements ActionListener {
 
 
         while(true){
+            long timestampFinal = System.currentTimeMillis();
+
+            long diferencaMilissegundos = timestampFinal - timestampInicial;
+            long diferencaSegundos = diferencaMilissegundos / 1000;
+
+            if (diferencaSegundos == 30) {
+                byte[] message = ("status " + this._user.getNome() + ":" + "VOLTO_LOGO").getBytes();
+                DatagramPacket packet = new DatagramPacket(message, message.length, InetAddress.getByName("localhost"), 8085);
+                _socket.send(packet);
+            }
             recebeSonda();
+
         }
 
     }
@@ -208,6 +223,7 @@ public class Screen extends JFrame implements ActionListener {
     public void recebeSonda(){
         try{
             System.out.println("recebendo sonda");
+            timestampInicial = System.currentTimeMillis();
             recebeMensagens = new byte[1024];
             DatagramPacket recebeSonda = new DatagramPacket(recebeMensagens, recebeMensagens.length);
             _socket.receive(recebeSonda);
